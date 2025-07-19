@@ -1,0 +1,432 @@
+
+
+import 'dart:convert';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:klubba/utils/app_modal.dart';
+import 'package:klubba/view/login/login_screen.dart';
+import 'package:klubba/view/login/login_with_otp_screen.dart';
+import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toast/toast.dart';
+
+import '../../network/Utils.dart';
+import '../../network/api_dialog.dart';
+import '../../network/api_helper.dart';
+import '../app_theme.dart';
+
+class ChangePassword extends StatefulWidget{
+  _changePasswordState createState()=>_changePasswordState();
+}
+
+class _changePasswordState extends State<ChangePassword>{
+  final _formKeyChangePassword = GlobalKey<FormState>();
+  TextEditingController currentController = TextEditingController();
+  TextEditingController newController = TextEditingController();
+  TextEditingController confirmController = TextEditingController();
+  bool isObscure = true;
+  bool isNewObscure = true;
+  bool isConfirmObscure = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_outlined, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        backgroundColor: AppTheme.themeColor,
+        title: RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF1A1A1A),
+            ),
+            children: <TextSpan>[
+              const TextSpan(
+                text: 'Change ',
+                style: const TextStyle(fontSize: 16, color: Colors.black),
+              ),
+              TextSpan(
+                text: 'Password',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+              ),
+            ],
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body:  Form(
+        key: _formKeyChangePassword,
+        child: Stack(
+          children: [
+            ListView(
+              children: [
+                SizedBox(height: 15,),
+                Center(
+                  child:  Lottie.asset('assets/chan_pass_anim.json',
+                      width: MediaQuery.of(context).size.width *
+                          0.6,
+                      height:
+                      MediaQuery.of(context).size.height *
+                          0.35),
+                ),
+                SizedBox(height: 15,),
+                const Padding(padding: EdgeInsets.symmetric(horizontal: 15),
+                child: Text(
+                  "Current Password",
+                  style: TextStyle(
+                    color: AppTheme.blueColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500
+                  ),
+                ),),
+
+                SizedBox(height: 5),
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 15),
+                  child: TextFormField(
+                      validator: checkCurrentPassword,
+                      obscureText: isObscure,
+                      controller: currentController,
+                      style: const TextStyle(
+                        fontSize: 15.0,
+                        color: Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        errorMaxLines: 2,
+                        fillColor: AppTheme.greyColor,
+                        filled: true,
+                        contentPadding: EdgeInsets.all(10),
+                        /*    contentPadding:
+                                    const EdgeInsets.fromLTRB(
+                                        0.0, 20.0, 0.0, 10.0),*/
+                        suffixIcon: IconButton(
+                          icon: isObscure
+                              ? const Icon(
+                            Icons.visibility_off,
+                            size: 20,
+                            color: AppTheme.blueColor,
+                          )
+                              : const Icon(
+                            Icons.visibility,
+                            size: 20,
+                            color: AppTheme.blueColor,
+                          ),
+                          onPressed: () {
+                            Future.delayed(Duration.zero,
+                                    () async {
+                                  if (isObscure) {
+                                    isObscure = false;
+                                  } else {
+                                    isObscure = true;
+                                  }
+                                  setState(() {});
+                                });
+                          },
+                        ),
+                        hintText: '******',
+                        hintStyle: const TextStyle(
+                          fontSize: 15.0,
+                          color: Colors.grey,
+                        ),
+                      )),
+                ),
+                SizedBox(height: 15,),
+                const Padding(padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: Text(
+                    "New Password",
+                    style: TextStyle(
+                        color: AppTheme.blueColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500
+                    ),
+                  ),),
+                SizedBox(height: 5),
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 15),
+                  child: TextFormField(
+                      validator: checkPasswordValidator,
+
+                      obscureText: isNewObscure,
+                      controller: newController,
+                      style: const TextStyle(
+                        fontSize: 15.0,
+                        color: Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        errorMaxLines: 2,
+                        fillColor: AppTheme.greyColor,
+                        filled: true,
+                        contentPadding: EdgeInsets.all(10),
+                        /*    contentPadding:
+                                    const EdgeInsets.fromLTRB(
+                                        0.0, 20.0, 0.0, 10.0),*/
+                        suffixIcon: IconButton(
+                          icon: isNewObscure
+                              ? const Icon(
+                            Icons.visibility_off,
+                            size: 20,
+                            color: AppTheme.blueColor,
+                          )
+                              : const Icon(
+                            Icons.visibility,
+                            size: 20,
+                            color: AppTheme.blueColor,
+                          ),
+                          onPressed: () {
+                            Future.delayed(Duration.zero,
+                                    () async {
+                                  if (isNewObscure) {
+                                    isNewObscure = false;
+                                  } else {
+                                    isNewObscure = true;
+                                  }
+
+                                  setState(() {});
+                                });
+                          },
+                        ),
+                        hintText: '******',
+                        hintStyle: const TextStyle(
+                          fontSize: 15.0,
+                          color: Colors.grey,
+                        ),
+                      )),
+                ),
+                SizedBox(height: 15,),
+                const Padding(padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: Text(
+                    "Confirm Password",
+                    style: TextStyle(
+                        color: AppTheme.blueColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500
+                    ),
+                  ),),
+
+                SizedBox(height: 5),
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 15),
+                  child: TextFormField(
+                      validator: checkPasswordValidator,
+                      obscureText: isConfirmObscure,
+                      controller: confirmController,
+                      style: const TextStyle(
+                        fontSize: 15.0,
+                        color: Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        errorMaxLines: 2,
+                        fillColor: AppTheme.greyColor,
+                        filled: true,
+                        contentPadding: EdgeInsets.all(10),
+                        /*    contentPadding:
+                                    const EdgeInsets.fromLTRB(
+                                        0.0, 20.0, 0.0, 10.0),*/
+                        suffixIcon: IconButton(
+                          icon: isConfirmObscure
+                              ? const Icon(
+                            Icons.visibility_off,
+                            size: 20,
+                            color: AppTheme.blueColor,
+                          )
+                              : const Icon(
+                            Icons.visibility,
+                            size: 20,
+                            color: AppTheme.blueColor,
+                          ),
+                          onPressed: () {
+                            Future.delayed(Duration.zero,
+                                    () async {
+                                  if (isConfirmObscure) {
+                                    isConfirmObscure = false;
+                                  } else {
+                                    isConfirmObscure = true;
+                                  }
+                                  setState(() {});
+                                });
+                          },
+                        ),
+                        hintText: '******',
+                        hintStyle: const TextStyle(
+                          fontSize: 15.0,
+                          color: Colors.grey,
+                        ),
+                      )),
+                ),
+                const SizedBox(height: 40),
+                InkWell(
+                  onTap: () {
+                    _submitHandler(context);
+                    /*Route route = MaterialPageRoute(builder: (context) => DialogScreen());
+                                        Navigator.pushAndRemoveUntil(
+                                            context, route, (Route<dynamic> route) => false);*/
+                  },
+                  child: Container(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 17),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius:
+                          BorderRadius.circular(5)),
+                      height: 50,
+                      child: const Center(
+                        child: Text('Save Changes',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white)),
+                      )),
+                ),
+                const SizedBox(height: 18),
+
+
+
+
+
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  String? checkPasswordValidator(String? value) {
+    RegExp regex = RegExp(r'^(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
+    if (value!.length < 7 && value.length > 17) {
+      return 'combination of at-least 1 number,1 Alphabet,1 special character and minimum 8 digits.';
+    }else{
+      if(!regex.hasMatch(value)){
+        return 'combination of at-least 1 number,1 Alphabet,1 special character and minimum 8 digits.';
+      }else{
+        return null;
+      }
+    }
+  }
+  String? checkCurrentPassword(String? value) {
+    if (value!.isEmpty) {
+      return 'Current Password cannot be Empty';
+    }
+    return null;
+  }
+
+
+
+  bool checkConfirmPasswordValidator() {
+    if(newController.text==confirmController.text){
+      return true;
+    }else{
+      return false;
+    }
+
+  }
+
+  void _submitHandler(BuildContext context) async {
+    if (!_formKeyChangePassword.currentState!.validate()) {
+      return;
+    }
+    _formKeyChangePassword.currentState!.save();
+    if(checkConfirmPasswordValidator()){
+
+
+       _changePassword(context);
+    }else{
+      Toast.show('New Password and Confirm password not matched!!',
+          duration: Toast.lengthLong,
+          gravity: Toast.bottom,
+          backgroundColor: Colors.red);
+    }
+
+  }
+
+  _changePassword(BuildContext context) async{
+    APIDialog.showAlertDialog(context, 'changing Password...');
+    String? id=await MyUtils.getSharedPreferences('_id');
+    String? role=await MyUtils.getSharedPreferences('current_role');
+    var data = {
+      "method_name": "changePassword",
+      "data": {
+        "old_password": currentController.text,
+        "new_password": newController.text,
+        "confirm_password": confirmController.text,
+        "slug": AppModel.slug,
+        "current_role": role,
+        "current_category_id": null,
+        "action_performed_by": id
+      }
+    };
+    print(data.toString());
+    var requestModel = {'req': base64.encode(utf8.encode(json.encode(data)))};
+
+    ApiBaseHelper helper = ApiBaseHelper();
+    var response = await helper.postAPI(
+        'changePassword', requestModel, context);
+    Navigator.pop(context);
+    var responseJSON = json.decode(response.body);
+    print(responseJSON);
+    if(responseJSON['decodedData']['status']=="error")
+    {
+
+        Toast.show(responseJSON['decodedData']['errors'].toString(),
+            duration: Toast.lengthLong,
+            gravity: Toast.bottom,
+            backgroundColor: Colors.red);
+
+
+    }
+    else
+    {
+      Toast.show(responseJSON['decodedData']['message'],
+          duration: Toast.lengthLong,
+          gravity: Toast.bottom,
+          backgroundColor: Colors.greenAccent);
+      _logOut();
+
+    }
+  }
+
+
+  _logOut() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginOTPScreen()),
+            (Route<dynamic> route) => false);
+    logOutUser();
+  }
+  logOutUser() async {
+    var currentRole = await MyUtils.getSharedPreferences('current_role');
+    String? id = await MyUtils.getSharedPreferences('_id');
+    String? catId = await MyUtils.getSharedPreferences('current_category_id');
+    var data = {
+      "method_name": "saveLoginInfo",
+      "data": {
+        "user_id": id,
+        "mode": "logout",
+        "slug": AppModel.slug,
+        "current_role": currentRole,
+        "current_category_id": catId,
+        "action_performed_by": id
+      }
+    };
+    print(data);
+
+    var requestModel = {'req': base64.encode(utf8.encode(json.encode(data)))};
+
+    ApiBaseHelper helper = ApiBaseHelper();
+    var response = await helper.postAPI('saveLoginInfo', requestModel, context);
+    var responseJSON = json.decode(response.body);
+    print(responseJSON);
+  }
+}
